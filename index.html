@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+﻿﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -382,7 +382,7 @@
 
 <!-- Login Screen -->
 <div id="loginScreen">
-  <h1>ðŸ‘¤ FaceFind</h1>
+  <h1>FaceFind</h1>
   <p>Sign in with your Google account to access your congregation face directory.</p>
   <button id="loginBtn" onclick="startLogin()">Sign in with Google</button>
   <p style="font-size:0.8rem;color:#555;">Your data stays in your Google Drive and Sheets.</p>
@@ -391,7 +391,7 @@
 <!-- App Screen -->
 <div id="appScreen">
   <header>
-    <h1>ðŸ‘¤ FaceFind</h1>
+    <h1>FaceFind</h1>
     <div class="header-right">
       <button class="mode-toggle" id="modeToggle" onclick="toggleMode()">ï¼‹ Add Mode</button>
       <button class="signout-btn" onclick="signOut()">Sign Out</button>
@@ -555,6 +555,7 @@
       callback: (resp) => {
         if (resp.error) { alert('Sign in failed: ' + resp.error); return; }
         accessToken = resp.access_token;
+        localStorage.setItem('ff_token', accessToken);
         showApp();
         loadSheet();
       }
@@ -981,6 +982,7 @@
 </script>
 </body>
 </html>
+
 
 
 
