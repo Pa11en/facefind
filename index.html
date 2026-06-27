@@ -549,6 +549,9 @@
 
   // --- Auth ---
   window.onload = () => {
+    // Try restoring saved token
+    const saved = localStorage.getItem('ff_token');
+    if (saved) { accessToken = saved; showApp(); loadSheet(); return; }
     tokenClient = google.accounts.oauth2.initTokenClient({
       client_id: CLIENT_ID,
       scope: SCOPES,
@@ -982,6 +985,8 @@
 </script>
 </body>
 </html>
+
+
 
 
 
