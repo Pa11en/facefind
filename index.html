@@ -577,6 +577,13 @@
   function showApp() {
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('appScreen').style.display = 'block';
+    // Refresh token every 45 minutes
+    setInterval(async () => {
+      try {
+        const result = await tokenClient.requestAccessToken({ prompt: '' });
+        if (result && result.access_token) accessToken = result.access_token;
+      } catch(e) {}
+    }, 45 * 60 * 1000);
   }
 
   // --- Load Sheet ---
@@ -974,4 +981,5 @@
 </script>
 </body>
 </html>
+
 
