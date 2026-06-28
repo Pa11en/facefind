@@ -393,7 +393,7 @@
   <header>
     <h1>FaceFind</h1>
     <div class="header-right">
-      <button class="mode-toggle" id="modeToggle" onclick="toggleMode()">ï¼‹ Add Mode</button>
+      <button class="mode-toggle" id="modeToggle" onclick="toggleMode()">+ Add Mode</button>
       <button class="signout-btn" onclick="signOut()">Sign Out</button>
     </div>
   </header>
@@ -677,7 +677,7 @@
     addMode = !addMode;
     const btn = document.getElementById('modeToggle');
     const addBtn = document.getElementById('addBtn');
-    btn.textContent = addMode ? 'âœ“ Identify Mode' : 'ï¼‹ Add Mode';
+    btn.textContent = addMode ? 'âœ“ Identify Mode' : '+ Add Mode';
     btn.classList.toggle('add-mode', addMode);
     addBtn.classList.toggle('visible', addMode);
   }
