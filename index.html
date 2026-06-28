@@ -1,0 +1,1088 @@
+﻿﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FaceFind</title>
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; background: #1a1a2e; color: #eee; min-height: 100vh; }
+
+  #loginScreen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    gap: 24px;
+    padding: 20px;
+  }
+  #loginScreen h1 { font-size: 2.5rem; color: #e94560; }
+  #loginScreen p { color: #aaa; text-align: center; max-width: 300px; }
+  #loginBtn {
+    background: #e94560;
+    color: white;
+    border: none;
+    padding: 14px 32px;
+    border-radius: 10px;
+    font-size: 1.1rem;
+    cursor: pointer;
+  }
+
+  #appScreen { display: none; }
+
+  header {
+    background: #16213e;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 2px solid #0f3460;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+  header h1 { font-size: 1.3rem; color: #e94560; }
+  .header-right { display: flex; gap: 8px; align-items: center; }
+  .mode-toggle {
+    background: #0f3460;
+    border: none;
+    color: #eee;
+    padding: 7px 13px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.8rem;
+  }
+  .mode-toggle.add-mode { background: #e94560; }
+  .signout-btn {
+    background: transparent;
+    border: 1px solid #0f3460;
+    color: #aaa;
+    padding: 7px 13px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.8rem;
+  }
+
+  .filter-section {
+    background: #16213e;
+    padding: 10px 16px;
+    border-bottom: 1px solid #0f3460;
+  }
+  .filter-label { font-size: 0.72rem; color: #aaa; margin-bottom: 4px; }
+  .filter-row {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 6px;
+    margin-bottom: 6px;
+  }
+  .filter-btn {
+    padding: 5px 14px;
+    border-radius: 20px;
+    border: 2px solid #0f3460;
+    background: transparent;
+    color: #eee;
+    font-size: 0.82rem;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .filter-btn.active { background: #e94560; border-color: #e94560; }
+
+  .search-bar { padding: 10px 16px; background: #1a1a2e; }
+  .search-bar input {
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid #0f3460;
+    background: #16213e;
+    color: #eee;
+    font-size: 1rem;
+  }
+
+  .status-bar {
+    text-align: center;
+    padding: 8px;
+    font-size: 0.8rem;
+    color: #aaa;
+    background: #1a1a2e;
+  }
+
+  .face-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
+    padding: 16px;
+  }
+  .face-card {
+    background: #16213e;
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: border 0.2s;
+  }
+  .face-card:hover { border-color: #e94560; }
+  .face-card img {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    object-position: top;
+  }
+  .face-card .face-placeholder {
+    width: 100%;
+    aspect-ratio: 1;
+    background: #0f3460;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3.5rem;
+  }
+  .face-card .name {
+    padding: 8px 6px 4px;
+    font-size: 0.95rem;
+    font-weight: bold;
+    text-align: center;
+    color: #fff;
+  }
+  .face-card .group-tag {
+    padding: 0 6px 8px;
+    font-size: 0.72rem;
+    text-align: center;
+    color: #aaa;
+  }
+
+  .add-btn {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: #e94560;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 64px;
+    height: 64px;
+    font-size: 2rem;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(233,69,96,0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+  }
+  .add-btn.visible { display: flex; }
+
+  /* Modals */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    justify-content: center;
+    align-items: flex-end;
+    z-index: 100;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: #16213e;
+    border-radius: 20px 20px 0 0;
+    padding: 24px;
+    width: 100%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  .modal h2 { margin-bottom: 16px; color: #e94560; }
+  .modal label { display: block; margin-bottom: 5px; font-size: 0.88rem; color: #aaa; }
+  .modal input, .modal select, .modal textarea {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 13px;
+    border-radius: 8px;
+    border: 1px solid #0f3460;
+    background: #1a1a2e;
+    color: #eee;
+    font-size: 0.95rem;
+  }
+  .modal textarea { height: 80px; resize: vertical; }
+
+  .family-suggestions {
+    background: #0f3460;
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 13px;
+    display: none;
+  }
+  .family-suggestions.visible { display: block; }
+  .family-suggestions p { font-size: 0.82rem; color: #aaa; margin-bottom: 8px; }
+  .suggestion-chip {
+    display: inline-block;
+    background: #16213e;
+    border: 1px solid #e94560;
+    border-radius: 20px;
+    padding: 4px 12px;
+    margin: 3px;
+    cursor: pointer;
+    font-size: 0.82rem;
+  }
+  .suggestion-chip.selected { background: #e94560; color: white; }
+
+  .photo-area {
+    background: #0f3460;
+    border-radius: 12px;
+    height: 160px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 10px;
+    font-size: 0.95rem;
+    color: #aaa;
+    flex-direction: column;
+    gap: 8px;
+    overflow: hidden;
+  }
+  .photo-area span { font-size: 2.5rem; }
+  .photo-options { display: flex; gap: 8px; margin-bottom: 13px; }
+  .photo-options button {
+    flex: 1;
+    padding: 9px 4px;
+    border-radius: 8px;
+    border: 1px solid #0f3460;
+    background: #0f3460;
+    color: #eee;
+    cursor: pointer;
+    font-size: 0.78rem;
+  }
+  .modal-actions { display: flex; gap: 10px; margin-top: 6px; }
+  .modal-actions button {
+    flex: 1;
+    padding: 12px;
+    border-radius: 10px;
+    border: none;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+  .btn-cancel { background: #0f3460; color: #eee; }
+  .btn-save { background: #e94560; color: white; font-weight: bold; }
+
+  /* Detail view */
+  .detail-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.92);
+    justify-content: center;
+    align-items: flex-start;
+    z-index: 200;
+    overflow-y: auto;
+    padding: 20px 16px 40px;
+  }
+  .detail-overlay.open { display: flex; }
+  .detail-inner {
+    width: 100%;
+    max-width: 420px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+  }
+  .detail-photo {
+    width: 220px;
+    height: 220px;
+    object-fit: cover;
+    object-position: top;
+    border-radius: 50%;
+    border: 4px solid #e94560;
+  }
+  .detail-placeholder {
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    background: #0f3460;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 5rem;
+    border: 4px solid #e94560;
+  }
+  .detail-name { font-size: 1.8rem; font-weight: bold; color: #fff; text-align: center; }
+  .detail-meta { font-size: 0.9rem; color: #aaa; text-align: center; }
+  .detail-notes {
+    background: #16213e;
+    border-radius: 10px;
+    padding: 12px 16px;
+    width: 100%;
+    font-size: 0.92rem;
+    color: #ccc;
+    line-height: 1.5;
+  }
+  .section-label {
+    font-size: 0.72rem;
+    color: #e94560;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .family-thumbs { display: flex; gap: 12px; flex-wrap: wrap; }
+  .family-thumb {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+  }
+  .family-thumb img {
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    object-fit: cover;
+    object-position: top;
+    border: 2px solid #e94560;
+  }
+  .family-thumb .thumb-ph {
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    background: #0f3460;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    border: 2px solid #e94560;
+  }
+  .family-thumb span { font-size: 0.72rem; color: #ccc; text-align: center; max-width: 78px; }
+  .detail-actions { display: flex; gap: 10px; width: 100%; }
+  .detail-actions button {
+    flex: 1;
+    padding: 12px;
+    border-radius: 10px;
+    border: none;
+    font-size: 0.95rem;
+    cursor: pointer;
+  }
+  .btn-edit { background: #0f3460; color: #eee; }
+  .btn-close { background: #e94560; color: white; font-weight: bold; }
+
+  .saving-indicator {
+    position: fixed;
+    bottom: 100px;
+    right: 24px;
+    background: #0f3460;
+    color: #eee;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    display: none;
+    z-index: 300;
+  }
+  .saving-indicator.visible { display: block; }
+</style>
+</head>
+<body>
+
+<!-- Login Screen -->
+<div id="loginScreen">
+  <h1>FaceFind</h1>
+  <p>Sign in with your Google account to access your congregation face directory.</p>
+  <button id="loginBtn" onclick="startLogin()">Sign in with Google</button>
+  <p style="font-size:0.8rem;color:#555;">Your data stays in your Google Drive and Sheets.</p>
+</div>
+
+<!-- App Screen -->
+<div id="appScreen">
+  <header>
+    <h1>FaceFind</h1>
+    <div class="header-right">
+      <button class="mode-toggle" id="modeToggle" onclick="toggleMode()">+ Add Mode</button>
+      <button class="signout-btn" onclick="signOut()">Sign Out</button>
+    </div>
+  </header>
+
+  <div class="filter-section">
+    <div class="filter-label">Gender</div>
+    <div class="filter-row" id="genderFilters">
+      <button class="filter-btn active" onclick="setFilter('gender','All',this)">All</button>
+      <button class="filter-btn" onclick="setFilter('gender','Male',this)">Male</button>
+      <button class="filter-btn" onclick="setFilter('gender','Female',this)">Female</button>
+    </div>
+    <div class="filter-label">Group</div>
+    <div class="filter-row" id="groupFilters">
+      <button class="filter-btn active" onclick="setFilter('group','All',this)">All</button>
+      <button class="filter-btn" onclick="setFilter('group','West Congregation',this)">West Cong</button>
+      <button class="filter-btn" onclick="setFilter('group','Family',this)">Family</button>
+      <button class="filter-btn" onclick="setFilter('group','Friends',this)">Friends</button>
+    </div>
+  </div>
+
+  <div class="search-bar">
+    <input type="text" placeholder="Search by name..." oninput="renderGrid()" id="search">
+  </div>
+
+  <div class="status-bar" id="statusBar">Loading...</div>
+  <div class="face-grid" id="faceGrid"></div>
+</div>
+
+<button class="add-btn" id="addBtn" onclick="openAddModal()">+</button>
+<div class="saving-indicator" id="savingIndicator">Saving...</div>
+
+<!-- Add Person Modal -->
+<div class="modal-overlay" id="addModal">
+  <div class="modal">
+    <h2>Add Person</h2>
+    <label>Full Name</label>
+    <input type="text" id="newName" placeholder="e.g. John Smith" oninput="checkFamilySuggestions('add')">
+    <div class="family-suggestions" id="familySuggestions">
+      <p>Possible family match tap to link:</p>
+      <div id="suggestionChips"></div>
+    </div>
+    <label>Gender</label>
+    <select id="newGender">
+      <option>Male</option>
+      <option>Female</option>
+    </select>
+    <label>Group</label>
+    <select id="newGroup">
+      <option>West Congregation</option>
+      <option>Family</option>
+      <option>Friends</option>
+    </select>
+    <label>Notes</label>
+    <textarea id="newNotes" placeholder="Any helpful details..."></textarea>
+    <div class="photo-area" id="photoArea">
+      <span></span>
+      <div>Tap photo options below</div>
+    </div>
+    <div class="photo-options">
+      <button onclick="triggerCamera(true,'add')">Take Photo</button>
+      <button onclick="triggerCamera(false,'add')">Gallery</button>
+      <button onclick="openGooglePhotos('add')">Google Photos</button>
+      <button onclick="openGooglePhotos('add')">Google Photos</button>
+      <button onclick="openDrivePicker('add')">Google Drive</button>
+      <button onclick="skipPhoto()">Skip</button>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeAddModal()">Cancel</button>
+      <button class="btn-save" onclick="savePerson()">Save Person</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Person Modal -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <h2>Edit Person</h2>
+    <label>Full Name</label>
+    <input type="text" id="editName" oninput="checkFamilySuggestions('edit')">
+    <div class="family-suggestions" id="editFamilySuggestions">
+      <p>Possible family match tap to link:</p>
+      <div id="editSuggestionChips"></div>
+    </div>
+    <label>Gender</label>
+    <select id="editGender">
+      <option>Male</option>
+      <option>Female</option>
+    </select>
+    <label>Group</label>
+    <select id="editGroup">
+      <option>West Congregation</option>
+      <option>Family</option>
+      <option>Friends</option>
+    </select>
+    <label>Notes</label>
+    <textarea id="editNotes" placeholder="Any helpful details..."></textarea>
+    <label>Current Family Links</label>
+    <div id="editFamilyLinks" style="margin-bottom:13px;display:flex;flex-wrap:wrap;gap:6px;"></div>
+    <div class="photo-area" id="editPhotoArea">
+      <span></span>
+      <div>Current photo</div>
+    </div>
+    <div class="photo-options">
+      <button onclick="triggerCamera(true,'edit')">Take Photo</button>
+      <button onclick="triggerCamera(false,'edit')">Gallery</button>
+      <button onclick="openGooglePhotos('edit')">Google Photos</button>
+      <button onclick="openGooglePhotos('edit')">Google Photos</button>
+      <button onclick="openDrivePicker('edit')">Google Drive</button>
+      <button onclick="removePhoto()">Remove Photo</button>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeEditModal()">Cancel</button>
+      <button class="btn-save" onclick="updatePerson()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- Detail View -->
+<div class="detail-overlay" id="detailView">
+  <div class="detail-inner">
+    <div class="detail-placeholder" id="detailPlaceholder"></div>
+    <img class="detail-photo" id="detailImg" src="" style="display:none">
+    <div class="detail-name" id="detailName"></div>
+    <div class="detail-meta" id="detailMeta"></div>
+    <div id="detailNotesBlock" style="width:100%;display:none">
+      <div class="detail-notes">
+        <div class="section-label">Notes</div>
+        <div id="detailNotesText"></div>
+      </div>
+    </div>
+    <div id="familySection" style="width:100%;display:none">
+      <div class="section-label">Family Members</div>
+      <div class="family-thumbs" id="familyThumbs"></div>
+    </div>
+    <div class="detail-actions">
+      <button class="btn-edit" onclick="openEditFromDetail()">Edit</button>
+      <button class="btn-close" onclick="closeDetail()">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const CLIENT_ID = '867510570123-9sa1vdognbeb09m07hdmbsi5a3o9sipq.apps.googleusercontent.com';
+  const SHEET_ID = '18-EluJQTEN5aoeyVYvg-2NJ0MJL_EvsCQ8oZyOxbrhc';
+  const SCOPES = 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/photospicker.mediaitems.readonly https://www.googleapis.com/auth/drive.readonly';
+
+  let tokenClient;
+  let accessToken = null;
+  let people = [];
+  let filters = { gender: 'All', group: 'All' };
+  let addMode = false;
+  let addCapturedPhoto = null;
+  let editCapturedPhoto = null;
+  let editPhotoChanged = false;
+  let selectedFamilyIDs = [];
+  let editSelectedFamilyIDs = [];
+  let currentDetailID = null;
+  let editingPersonID = null;
+
+  // --- Auth ---
+  window.onload = () => {
+    // Try restoring saved token
+    const saved = localStorage.getItem('ff_token');
+    if (saved) { accessToken = saved; showApp(); loadSheet(); return; }
+    tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: CLIENT_ID,
+      scope: SCOPES,
+      callback: (resp) => {
+        if (resp.error) { alert('Sign in failed: ' + resp.error); return; }
+        accessToken = resp.access_token;
+        localStorage.setItem('ff_token', accessToken);
+        showApp();
+        loadSheet();
+      }
+    });
+  };
+
+  function startLogin() {
+    tokenClient.requestAccessToken({ prompt: 'consent' });
+  }
+
+  function signOut() {
+    google.accounts.oauth2.revoke(accessToken, () => {
+      accessToken = null;
+      people = [];
+      document.getElementById('loginScreen').style.display = 'flex';
+      document.getElementById('appScreen').style.display = 'none';
+    });
+  }
+
+  function showApp() {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('appScreen').style.display = 'block';
+    // Refresh token every 45 minutes
+    setInterval(async () => {
+      try {
+        const result = await tokenClient.requestAccessToken({ prompt: '' });
+        if (result && result.access_token) accessToken = result.access_token;
+      } catch(e) {}
+    }, 45 * 60 * 1000);
+  }
+
+
+  // --- Google Photos Picker ---
+  async function openGooglePhotos(mode) {
+    try {
+      const resp = await fetch('https://photospicker.googleapis.com/v1/sessions', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + accessToken, 'Content-Type': 'application/json' }
+      });
+      const session = await resp.json();
+      if (!session.pickerUri) { alert('Could not open Google Photos. Make sure Photos Picker API is enabled.'); return; }
+      const popup = window.open(session.pickerUri, 'gp', 'width=600,height=700');
+      const poll = setInterval(async () => {
+        if (popup && popup.closed) {
+          clearInterval(poll);
+          try {
+            const r2 = await fetch('https://photospicker.googleapis.com/v1/mediaItems?sessionId=' + session.id, {
+              headers: { Authorization: 'Bearer ' + accessToken }
+            });
+            const items = await r2.json();
+            if (items.mediaItems && items.mediaItems.length > 0) {
+              const r3 = await fetch(items.mediaItems[0].mediaFile.baseUrl + '=d');
+              const blob = await r3.blob();
+              const reader = new FileReader();
+              reader.onload = ev => {
+                const data = ev.target.result;
+                if (mode === 'add') {
+                  addCapturedPhoto = data;
+                  document.getElementById('photoArea').innerHTML = '<img src="' + data + '" style="width:100%;height:100%;object-fit:cover;border-radius:12px;">';
+                } else {
+                  editCapturedPhoto = data;
+                  editPhotoChanged = true;
+                  document.getElementById('editPhotoArea').innerHTML = '<img src="' + data + '" style="width:100%;height:100%;object-fit:cover;border-radius:12px;">';
+                }
+              };
+              reader.readAsDataURL(blob);
+            }
+          } catch(e) { console.error('Photos error:', e); }
+        }
+      }, 1000);
+    } catch(e) { alert('Google Photos error: ' + e.message); }
+  }
+
+  // --- Google Drive Picker ---
+  async function openDrivePicker(mode) {
+    try {
+      const query = "mimeType contains 'image/' and trashed=false";
+      const resp = await fetch('https://www.googleapis.com/drive/v3/files?q=' + encodeURIComponent(query) + '&fields=files(id,name,mimeType,thumbnailLink)&pageSize=50', {
+        headers: { Authorization: 'Bearer ' + accessToken }
+      });
+      const data = await resp.json();
+      if (!data.files || data.files.length === 0) { alert('No images found in Google Drive.'); return; }
+
+      // Build a simple picker UI
+      const overlay = document.createElement('div');
+      overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:500;overflow-y:auto;padding:20px;';
+      overlay.innerHTML = '<h2 style="color:#e94560;margin-bottom:16px;">Pick from Google Drive</h2>' +
+        '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;">' +
+        data.files.map(f => '<div onclick="selectDriveFile('' + f.id + '','' + mode + '')" style="cursor:pointer;border-radius:8px;overflow:hidden;background:#16213e;">' +
+          (f.thumbnailLink ? '<img src="' + f.thumbnailLink + '" style="width:100%;aspect-ratio:1;object-fit:cover;">' : '<div style="width:100%;aspect-ratio:1;background:#0f3460;display:flex;align-items:center;justify-content:center;font-size:0.7rem;color:#aaa;padding:4px;text-align:center;">' + f.name + '</div>') +
+          '</div>').join('') +
+        '</div><button onclick="this.parentElement.remove()" style="margin-top:16px;background:#0f3460;color:#eee;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:1rem;">Cancel</button>';
+      document.body.appendChild(overlay);
+      window._drivePickerMode = mode;
+    } catch(e) { alert('Drive error: ' + e.message); }
+  }
+
+  async function selectDriveFile(fileId, mode) {
+    document.querySelectorAll('[style*="position:fixed"][style*="z-index:500"]').forEach(el => el.remove());
+    try {
+      const resp = await fetch('https://www.googleapis.com/drive/v3/files/' + fileId + '?alt=media', {
+        headers: { Authorization: 'Bearer ' + accessToken }
+      });
+      const blob = await resp.blob();
+      const reader = new FileReader();
+      reader.onload = ev => {
+        const data = ev.target.result;
+        if (mode === 'add') {
+          addCapturedPhoto = data;
+          document.getElementById('photoArea').innerHTML = '<img src="' + data + '" style="width:100%;height:100%;object-fit:cover;border-radius:12px;">';
+        } else {
+          editCapturedPhoto = data;
+          editPhotoChanged = true;
+          document.getElementById('editPhotoArea').innerHTML = '<img src="' + data + '" style="width:100%;height:100%;object-fit:cover;border-radius:12px;">';
+        }
+      };
+      reader.readAsDataURL(blob);
+    } catch(e) { alert('Could not load image: ' + e.message); }
+  }
+
+  // --- Load Sheet ---
+  async function loadSheet() {
+    setStatus('Loading people...');
+    try {
+      const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Sheet1!A2:G1000`;
+      const resp = await fetch(url, {
+        headers: { Authorization: 'Bearer ' + accessToken }
+      });
+      const data = await resp.json();
+      const rows = data.values || [];
+      people = rows.map(r => ({
+        id: parseInt(r[0]) || 0,
+        name: r[1] || '',
+        gender: r[2] || 'Male',
+        group: r[3] || 'West Congregation',
+        photo: r[4] || null,
+        familyIDs: r[5] ? r[5].split(',').map(x => parseInt(x.trim())).filter(Boolean) : [],
+        notes: r[6] || ''
+      })).filter(p => p.id && p.name);
+      setStatus(people.length + ' people loaded');
+      renderGrid();
+    } catch(e) {
+      setStatus('Error loading data check console');
+      console.error(e);
+    }
+  }
+
+  function setStatus(msg) {
+    document.getElementById('statusBar').textContent = msg;
+  }
+
+  // --- Save to Sheet ---
+  async function appendRow(person) {
+    showSaving(true);
+    const row = [
+      person.id,
+      person.name,
+      person.gender,
+      person.group,
+      person.photo || '',
+      person.familyIDs.join(','),
+      person.notes
+    ];
+    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Sheet1!A:G:append?valueInputOption=RAW`, {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer ' + accessToken,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ values: [row] })
+    });
+    showSaving(false);
+  }
+
+  async function updateRow(person) {
+    showSaving(true);
+    // Find row number (row 1 is header, data starts row 2)
+    const rowNum = people.findIndex(p => p.id === person.id) + 2;
+    const row = [
+      person.id,
+      person.name,
+      person.gender,
+      person.group,
+      person.photo || '',
+      person.familyIDs.join(','),
+      person.notes
+    ];
+    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Sheet1!A${rowNum}:G${rowNum}?valueInputOption=RAW`, {
+      method: 'PUT',
+      headers: {
+        Authorization: 'Bearer ' + accessToken,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ values: [row] })
+    });
+    showSaving(false);
+  }
+
+  function showSaving(on) {
+    document.getElementById('savingIndicator').classList.toggle('visible', on);
+  }
+
+  // --- Mode ---
+  function toggleMode() {
+    addMode = !addMode;
+    const btn = document.getElementById('modeToggle');
+    const addBtn = document.getElementById('addBtn');
+    btn.textContent = addMode ? 'Identify Mode' : '+ Add Mode';
+    btn.classList.toggle('add-mode', addMode);
+    addBtn.classList.toggle('visible', addMode);
+  }
+
+  // --- Filters ---
+  function setFilter(type, value, el) {
+    filters[type] = value;
+    const row = type === 'gender' ? 'genderFilters' : 'groupFilters';
+    document.querySelectorAll('#' + row + ' .filter-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    renderGrid();
+  }
+
+  // --- Grid ---
+  function renderGrid() {
+    const search = document.getElementById('search').value.toLowerCase();
+    const grid = document.getElementById('faceGrid');
+    const filtered = people.filter(p =>
+      (filters.gender === 'All' || p.gender === filters.gender) &&
+      (filters.group === 'All' || p.group === filters.group) &&
+      p.name.toLowerCase().includes(search)
+    );
+    if (filtered.length === 0) {
+      grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:#aaa;padding:40px;">No people found</div>';
+      return;
+    }
+    grid.innerHTML = filtered.map(p => `
+      <div class="face-card" onclick="showDetail(${p.id})">
+        ${p.photo && p.photo.startsWith('data:')
+          ? `<img src="${p.photo}" alt="${p.name}">`
+          : p.photo
+            ? `<img src="${p.photo}" alt="${p.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+            : ''}
+        <div class="face-placeholder" style="${p.photo ? 'display:none' : ''}"><img src="https://ui-avatars.com/api/?name=${p.gender === 'Female' ? 'F' : 'M'}&background=${p.gender === 'Female' ? 'e94560' : '0f3460'}&color=fff&size=200&bold=true" style="width:100%;height:100%;object-fit:cover;"></div>
+        <div class="name">${p.name}</div>
+        <div class="group-tag">${p.gender} - ${p.group}</div>
+      </div>
+    `).join('');
+  }
+
+  // --- Detail ---
+  function showDetail(id) {
+    const p = people.find(x => x.id === id);
+    if (!p) return;
+    currentDetailID = id;
+    document.getElementById('detailName').textContent = p.name;
+    document.getElementById('detailMeta').textContent = p.gender + ' - ' + p.group;
+
+    const imgEl = document.getElementById('detailImg');
+    const phEl = document.getElementById('detailPlaceholder');
+    if (p.photo) {
+      imgEl.src = p.photo.startsWith('data:') ? p.photo : p.photo;
+      imgEl.style.display = 'block';
+      phEl.style.display = 'none';
+    } else {
+      imgEl.style.display = 'none';
+      phEl.style.display = 'flex';
+    }
+
+    const notesBlock = document.getElementById('detailNotesBlock');
+    if (p.notes) {
+      document.getElementById('detailNotesText').textContent = p.notes;
+      notesBlock.style.display = 'block';
+    } else {
+      notesBlock.style.display = 'none';
+    }
+
+    const familyMembers = people.filter(x => p.familyIDs.includes(x.id));
+    const famSec = document.getElementById('familySection');
+    if (familyMembers.length > 0) {
+      famSec.style.display = 'block';
+      document.getElementById('familyThumbs').innerHTML = familyMembers.map(f => `
+        <div class="family-thumb" onclick="closeDetail();setTimeout(()=>showDetail(${f.id}),150)">
+          ${f.photo
+            ? `<img src="${f.photo.startsWith('data:') ? f.photo : f.photo}" alt="${f.name}">`
+            : `<div class="thumb-ph"></div>`}
+          <span>${f.name}</span>
+        </div>
+      `).join('');
+    } else {
+      famSec.style.display = 'none';
+    }
+    document.getElementById('detailView').classList.add('open');
+  }
+
+  function closeDetail() {
+    document.getElementById('detailView').classList.remove('open');
+  }
+
+  function openEditFromDetail() {
+    closeDetail();
+    setTimeout(() => openEditModal(currentDetailID), 150);
+  }
+
+  // --- Add Person ---
+  function openAddModal() {
+    addCapturedPhoto = null;
+    selectedFamilyIDs = [];
+    document.getElementById('newName').value = '';
+    document.getElementById('newNotes').value = '';
+    document.getElementById('familySuggestions').classList.remove('visible');
+    document.getElementById('photoArea').innerHTML = '<span></span><div>Tap photo options below</div>';
+    document.getElementById('addModal').classList.add('open');
+  }
+
+  function closeAddModal() {
+    document.getElementById('addModal').classList.remove('open');
+  }
+
+  function checkFamilySuggestions(mode) {
+    const nameEl = mode === 'add' ? 'newName' : 'editName';
+    const suggestEl = mode === 'add' ? 'familySuggestions' : 'editFamilySuggestions';
+    const chipsEl = mode === 'add' ? 'suggestionChips' : 'editSuggestionChips';
+    const selectedIDs = mode === 'add' ? selectedFamilyIDs : editSelectedFamilyIDs;
+
+    const name = document.getElementById(nameEl).value.trim();
+    const parts = name.split(' ');
+    const lastName = parts.length > 1 ? parts[parts.length - 1].toLowerCase() : '';
+    if (!lastName || lastName.length < 2) {
+      document.getElementById(suggestEl).classList.remove('visible');
+      return;
+    }
+    const excludeID = mode === 'edit' ? editingPersonID : null;
+    const matches = people.filter(p =>
+      p.name.toLowerCase().endsWith(lastName) && p.id !== excludeID
+    );
+    if (matches.length > 0) {
+      document.getElementById(suggestEl).classList.add('visible');
+      document.getElementById(chipsEl).innerHTML = matches.map(m => `
+        <span class="suggestion-chip ${selectedIDs.includes(m.id) ? 'selected' : ''}"
+          id="chip-${mode}-${m.id}"
+          onclick="toggleFamilyLink(${m.id},'${mode}')">${m.name}</span>
+      `).join('');
+    } else {
+      document.getElementById(suggestEl).classList.remove('visible');
+    }
+  }
+
+  function toggleFamilyLink(id, mode) {
+    const arr = mode === 'add' ? selectedFamilyIDs : editSelectedFamilyIDs;
+    const chip = document.getElementById(`chip-${mode}-${id}`);
+    const idx = arr.indexOf(id);
+    if (idx > -1) { arr.splice(idx, 1); chip.classList.remove('selected'); }
+    else { arr.push(id); chip.classList.add('selected'); }
+  }
+
+  function triggerCamera(useCamera, mode) {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    if (useCamera) input.capture = 'environment';
+    input.onchange = e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = ev => {
+        const data = ev.target.result;
+        if (mode === 'add') {
+          addCapturedPhoto = data;
+          document.getElementById('photoArea').innerHTML =
+            `<img src="${data}" style="width:100%;height:100%;object-fit:cover;border-radius:12px;">`;
+        } else {
+          editCapturedPhoto = data;
+          editPhotoChanged = true;
+          document.getElementById('editPhotoArea').innerHTML =
+            `<img src="${data}" style="width:100%;height:100%;object-fit:cover;border-radius:12px;">`;
+        }
+      };
+      reader.readAsDataURL(file);
+    };
+    input.click();
+  }
+
+  function skipPhoto() {
+    addCapturedPhoto = null;
+    document.getElementById('photoArea').innerHTML = '<span></span><div>No photo will add later</div>';
+  }
+
+  function removePhoto() {
+    editCapturedPhoto = null;
+    editPhotoChanged = true;
+    document.getElementById('editPhotoArea').innerHTML = '<span></span><div>No photo</div>';
+  }
+
+  async function savePerson() {
+    const name = document.getElementById('newName').value.trim();
+    const gender = document.getElementById('newGender').value;
+    const group = document.getElementById('newGroup').value;
+    const notes = document.getElementById('newNotes').value.trim();
+    if (!name) { alert('Please enter a name.'); return; }
+
+    const newID = people.length > 0 ? Math.max(...people.map(p => p.id)) + 1 : 1;
+
+    selectedFamilyIDs.forEach(fid => {
+      const rel = people.find(p => p.id === fid);
+      if (rel && !rel.familyIDs.includes(newID)) rel.familyIDs.push(newID);
+    });
+
+    const newPerson = {
+      id: newID,
+      name,
+      gender,
+      group,
+      photo: addCapturedPhoto || null,
+      familyIDs: [...selectedFamilyIDs],
+      notes
+    };
+
+    people.push(newPerson);
+    closeAddModal();
+    renderGrid();
+    setStatus('Saving...');
+    await appendRow(newPerson);
+
+    // Update family members rows too
+    for (const fid of selectedFamilyIDs) {
+      const rel = people.find(p => p.id === fid);
+      if (rel) await updateRow(rel);
+    }
+    setStatus(people.length + ' people loaded');
+  }
+
+  // --- Edit Person ---
+  function openEditModal(id) {
+    const p = people.find(x => x.id === id);
+    if (!p) return;
+    editingPersonID = id;
+    editCapturedPhoto = null;
+    editPhotoChanged = false;
+    editSelectedFamilyIDs = [...p.familyIDs];
+
+    document.getElementById('editName').value = p.name;
+    document.getElementById('editGender').value = p.gender;
+    document.getElementById('editGroup').value = p.group;
+    document.getElementById('editNotes').value = p.notes;
+    document.getElementById('editFamilySuggestions').classList.remove('visible');
+
+    // Show current family links as removable chips
+    const linksDiv = document.getElementById('editFamilyLinks');
+    if (p.familyIDs.length > 0) {
+      linksDiv.innerHTML = p.familyIDs.map(fid => {
+        const rel = people.find(x => x.id === fid);
+        return rel ? `<span class="suggestion-chip selected" onclick="removeEditFamilyLink(${fid},this)">${rel.name} </span>` : '';
+      }).join('');
+    } else {
+      linksDiv.innerHTML = '<span style="color:#555;font-size:0.82rem;">None linked yet</span>';
+    }
+
+    // Show current photo
+    if (p.photo) {
+      const src = p.photo.startsWith('data:') ? p.photo : p.photo;
+      document.getElementById('editPhotoArea').innerHTML =
+        `<img src="${src}" style="width:100%;height:100%;object-fit:cover;border-radius:12px;">`;
+    } else {
+      document.getElementById('editPhotoArea').innerHTML = '<span></span><div>No photo yet</div>';
+    }
+
+    document.getElementById('editModal').classList.add('open');
+  }
+
+  function removeEditFamilyLink(fid, el) {
+    editSelectedFamilyIDs = editSelectedFamilyIDs.filter(x => x !== fid);
+    el.remove();
+  }
+
+  function closeEditModal() {
+    document.getElementById('editModal').classList.remove('open');
+  }
+
+  async function updatePerson() {
+    const p = people.find(x => x.id === editingPersonID);
+    if (!p) return;
+
+    p.name = document.getElementById('editName').value.trim();
+    p.gender = document.getElementById('editGender').value;
+    p.group = document.getElementById('editGroup').value;
+    p.notes = document.getElementById('editNotes').value.trim();
+
+    if (editPhotoChanged) p.photo = editCapturedPhoto;
+
+    // Merge family IDs
+    const addedLinks = editSelectedFamilyIDs.filter(id => !p.familyIDs.includes(id));
+    const removedLinks = p.familyIDs.filter(id => !editSelectedFamilyIDs.includes(id));
+    p.familyIDs = [...editSelectedFamilyIDs];
+
+    addedLinks.forEach(fid => {
+      const rel = people.find(x => x.id === fid);
+      if (rel && !rel.familyIDs.includes(p.id)) rel.familyIDs.push(p.id);
+    });
+    removedLinks.forEach(fid => {
+      const rel = people.find(x => x.id === fid);
+      if (rel) rel.familyIDs = rel.familyIDs.filter(x => x !== p.id);
+    });
+
+    closeEditModal();
+    renderGrid();
+    setStatus('Saving changes...');
+    await updateRow(p);
+    for (const fid of [...addedLinks, ...removedLinks]) {
+      const rel = people.find(x => x.id === fid);
+      if (rel) await updateRow(rel);
+    }
+    setStatus(people.length + ' people loaded');
+  }
+</script>
+</body>
+</html>
+
+
+
+
+
+
