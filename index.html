@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FaceFind</title>
-<script src="https://accounts.google.com/gsi/client"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -457,6 +457,7 @@
       <button onclick="triggerCamera(true,'add')">Take Photo</button>
       <button onclick="triggerCamera(false,'add')">Gallery</button>
       <button onclick="openGooglePhotos('add')">Google Photos</button>
+      <button onclick="openGooglePhotos('add')">Google Photos</button>
       <button onclick="openDrivePicker('add')">Google Drive</button>
       <button onclick="skipPhoto()">Skip</button>
     </div>
@@ -499,6 +500,7 @@
     <div class="photo-options">
       <button onclick="triggerCamera(true,'edit')">Take Photo</button>
       <button onclick="triggerCamera(false,'edit')">Gallery</button>
+      <button onclick="openGooglePhotos('edit')">Google Photos</button>
       <button onclick="openGooglePhotos('edit')">Google Photos</button>
       <button onclick="openDrivePicker('edit')">Google Drive</button>
       <button onclick="removePhoto()">Remove Photo</button>
@@ -553,7 +555,10 @@
   let editingPersonID = null;
 
   // --- Auth ---
-  function initApp() {
+  window.onload = () => {
+    // Try restoring saved token
+    const saved = localStorage.getItem('ff_token');
+    if (saved) { accessToken = saved; showApp(); loadSheet(); return; }
     tokenClient = google.accounts.oauth2.initTokenClient({
       client_id: CLIENT_ID,
       scope: SCOPES,
@@ -565,16 +570,6 @@
         loadSheet();
       }
     });
-    const saved = localStorage.getItem('ff_token');
-    if (saved) { accessToken = saved; showApp(); loadSheet(); return; }
-  }
-  window.onload = () => {
-    if (typeof google !== 'undefined' && google.accounts) {
-      initApp();
-    } else {
-      const gisScript = document.querySelector('script[src*="gsi"]');
-      if (gisScript) gisScript.addEventListener('load', initApp);
-    }
   };
 
   function startLogin() {
@@ -613,25 +608,16 @@
       const session = await resp.json();
       if (!session.pickerUri) { alert('Could not open Google Photos. Make sure Photos Picker API is enabled.'); return; }
       const popup = window.open(session.pickerUri, 'gp', 'width=600,height=700');
-
-      // Poll session status directly instead of waiting for popup close
       const poll = setInterval(async () => {
-        try {
-          const statusResp = await fetch('https://photospicker.googleapis.com/v1/sessions/' + session.id, {
-            headers: { Authorization: 'Bearer ' + accessToken }
-          });
-          const status = await statusResp.json();
-          if (status.mediaItemsSet) {
-            clearInterval(poll);
-            if (popup && !popup.closed) popup.close();
+        if (popup && popup.closed) {
+          clearInterval(poll);
+          try {
             const r2 = await fetch('https://photospicker.googleapis.com/v1/mediaItems?sessionId=' + session.id, {
               headers: { Authorization: 'Bearer ' + accessToken }
             });
             const items = await r2.json();
             if (items.mediaItems && items.mediaItems.length > 0) {
-              const photoUrl = items.mediaItems[0].mediaFile.baseUrl + '=w800-h800';
-              // baseUrl is a signed URL - no auth header needed
-              const r3 = await fetch(photoUrl);
+              const r3 = await fetch(items.mediaItems[0].mediaFile.baseUrl + '=d');
               const blob = await r3.blob();
               const reader = new FileReader();
               reader.onload = ev => {
@@ -647,12 +633,9 @@
               };
               reader.readAsDataURL(blob);
             }
-          }
-        } catch(e) { console.error('Poll error:', e); }
-      }, 2000);
-
-      // Stop polling after 5 minutes
-      setTimeout(() => clearInterval(poll), 300000);
+          } catch(e) { console.error('Photos error:', e); }
+        }
+      }, 1000);
     } catch(e) { alert('Google Photos error: ' + e.message); }
   }
 
