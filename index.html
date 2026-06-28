@@ -457,7 +457,6 @@
       <button onclick="triggerCamera(true,'add')">Take Photo</button>
       <button onclick="triggerCamera(false,'add')">Gallery</button>
       <button onclick="openGooglePhotos('add')">Google Photos</button>
-      <button onclick="openGooglePhotos('add')">Google Photos</button>
       <button onclick="openDrivePicker('add')">Google Drive</button>
       <button onclick="skipPhoto()">Skip</button>
     </div>
@@ -500,7 +499,6 @@
     <div class="photo-options">
       <button onclick="triggerCamera(true,'edit')">Take Photo</button>
       <button onclick="triggerCamera(false,'edit')">Gallery</button>
-      <button onclick="openGooglePhotos('edit')">Google Photos</button>
       <button onclick="openGooglePhotos('edit')">Google Photos</button>
       <button onclick="openDrivePicker('edit')">Google Drive</button>
       <button onclick="removePhoto()">Remove Photo</button>
@@ -632,10 +630,8 @@
             const items = await r2.json();
             if (items.mediaItems && items.mediaItems.length > 0) {
               const photoUrl = items.mediaItems[0].mediaFile.baseUrl + '=w800-h800';
-              // Fetch with auth header and convert to base64
-              const r3 = await fetch(photoUrl, {
-                headers: { Authorization: 'Bearer ' + accessToken }
-              });
+              // baseUrl is a signed URL - no auth header needed
+              const r3 = await fetch(photoUrl);
               const blob = await r3.blob();
               const reader = new FileReader();
               reader.onload = ev => {
