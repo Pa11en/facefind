@@ -631,7 +631,11 @@
             });
             const items = await r2.json();
             if (items.mediaItems && items.mediaItems.length > 0) {
-              const r3 = await fetch(items.mediaItems[0].mediaFile.baseUrl + '=w800');
+              const photoUrl = items.mediaItems[0].mediaFile.baseUrl + '=w800-h800';
+              // Fetch with auth header and convert to base64
+              const r3 = await fetch(photoUrl, {
+                headers: { Authorization: 'Bearer ' + accessToken }
+              });
               const blob = await r3.blob();
               const reader = new FileReader();
               reader.onload = ev => {
