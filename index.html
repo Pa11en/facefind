@@ -615,16 +615,23 @@
       const session = await resp.json();
       if (!session.pickerUri) { alert('Could not open Google Photos. Make sure Photos Picker API is enabled.'); return; }
       const popup = window.open(session.pickerUri, 'gp', 'width=600,height=700');
+
+      // Poll session status directly instead of waiting for popup close
       const poll = setInterval(async () => {
-        if (popup && popup.closed) {
-          clearInterval(poll);
-          try {
+        try {
+          const statusResp = await fetch('https://photospicker.googleapis.com/v1/sessions/' + session.id, {
+            headers: { Authorization: 'Bearer ' + accessToken }
+          });
+          const status = await statusResp.json();
+          if (status.mediaItemsSet) {
+            clearInterval(poll);
+            if (popup && !popup.closed) popup.close();
             const r2 = await fetch('https://photospicker.googleapis.com/v1/mediaItems?sessionId=' + session.id, {
               headers: { Authorization: 'Bearer ' + accessToken }
             });
             const items = await r2.json();
             if (items.mediaItems && items.mediaItems.length > 0) {
-              const r3 = await fetch(items.mediaItems[0].mediaFile.baseUrl + '=d');
+              const r3 = await fetch(items.mediaItems[0].mediaFile.baseUrl + '=w800');
               const blob = await r3.blob();
               const reader = new FileReader();
               reader.onload = ev => {
@@ -640,9 +647,12 @@
               };
               reader.readAsDataURL(blob);
             }
-          } catch(e) { console.error('Photos error:', e); }
-        }
-      }, 1000);
+          }
+        } catch(e) { console.error('Poll error:', e); }
+      }, 2000);
+
+      // Stop polling after 5 minutes
+      setTimeout(() => clearInterval(poll), 300000);
     } catch(e) { alert('Google Photos error: ' + e.message); }
   }
 
