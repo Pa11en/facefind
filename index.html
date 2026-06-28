@@ -422,7 +422,7 @@
   <div class="face-grid" id="faceGrid"></div>
 </div>
 
-<button class="add-btn" id="addBtn" onclick="openAddModal()">ï¼‹</button>
+<button class="add-btn" id="addBtn" onclick="openAddModal()"></button>
 <div class="saving-indicator" id="savingIndicator">Saving...</div>
 
 <!-- Add Person Modal -->
@@ -432,7 +432,7 @@
     <label>Full Name</label>
     <input type="text" id="newName" placeholder="e.g. John Smith" oninput="checkFamilySuggestions('add')">
     <div class="family-suggestions" id="familySuggestions">
-      <p>Possible family match â€” tap to link:</p>
+      <p>Possible family match tap to link:</p>
       <div id="suggestionChips"></div>
     </div>
     <label>Gender</label>
@@ -449,13 +449,13 @@
     <label>Notes</label>
     <textarea id="newNotes" placeholder="Any helpful details..."></textarea>
     <div class="photo-area" id="photoArea">
-      <span>ðŸ“·</span>
+      <span></span>
       <div>Tap photo options below</div>
     </div>
     <div class="photo-options">
-      <button onclick="triggerCamera(true,'add')">ðŸ“· Take Photo</button>
-      <button onclick="triggerCamera(false,'add')">ðŸ–¼ Gallery</button>
-      <button onclick="skipPhoto()">â­ Skip</button>
+      <button onclick="triggerCamera(true,'add')">Take Photo</button>
+      <button onclick="triggerCamera(false,'add')">Gallery</button>
+      <button onclick="skipPhoto()">Skip</button>
     </div>
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeAddModal()">Cancel</button>
@@ -471,7 +471,7 @@
     <label>Full Name</label>
     <input type="text" id="editName" oninput="checkFamilySuggestions('edit')">
     <div class="family-suggestions" id="editFamilySuggestions">
-      <p>Possible family match â€” tap to link:</p>
+      <p>Possible family match tap to link:</p>
       <div id="editSuggestionChips"></div>
     </div>
     <label>Gender</label>
@@ -490,13 +490,13 @@
     <label>Current Family Links</label>
     <div id="editFamilyLinks" style="margin-bottom:13px;display:flex;flex-wrap:wrap;gap:6px;"></div>
     <div class="photo-area" id="editPhotoArea">
-      <span>ðŸ“·</span>
+      <span></span>
       <div>Current photo</div>
     </div>
     <div class="photo-options">
-      <button onclick="triggerCamera(true,'edit')">ðŸ“· Take Photo</button>
-      <button onclick="triggerCamera(false,'edit')">ðŸ–¼ Gallery</button>
-      <button onclick="removePhoto()">ðŸ—‘ Remove Photo</button>
+      <button onclick="triggerCamera(true,'edit')">Take Photo</button>
+      <button onclick="triggerCamera(false,'edit')">Gallery</button>
+      <button onclick="removePhoto()">Remove Photo</button>
     </div>
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeEditModal()">Cancel</button>
@@ -508,7 +508,7 @@
 <!-- Detail View -->
 <div class="detail-overlay" id="detailView">
   <div class="detail-inner">
-    <div class="detail-placeholder" id="detailPlaceholder">ðŸ‘¤</div>
+    <div class="detail-placeholder" id="detailPlaceholder"></div>
     <img class="detail-photo" id="detailImg" src="" style="display:none">
     <div class="detail-name" id="detailName"></div>
     <div class="detail-meta" id="detailMeta"></div>
@@ -523,7 +523,7 @@
       <div class="family-thumbs" id="familyThumbs"></div>
     </div>
     <div class="detail-actions">
-      <button class="btn-edit" onclick="openEditFromDetail()">âœ Edit</button>
+      <button class="btn-edit" onclick="openEditFromDetail()">Edit</button>
       <button class="btn-close" onclick="closeDetail()">Close</button>
     </div>
   </div>
@@ -612,7 +612,7 @@
       setStatus(people.length + ' people loaded');
       renderGrid();
     } catch(e) {
-      setStatus('Error loading data â€” check console');
+      setStatus('Error loading data check console');
       console.error(e);
     }
   }
@@ -677,7 +677,7 @@
     addMode = !addMode;
     const btn = document.getElementById('modeToggle');
     const addBtn = document.getElementById('addBtn');
-    btn.textContent = addMode ? 'âœ“ Identify Mode' : '+ Add Mode';
+    btn.textContent = addMode ? 'Identify Mode' : '+ Add Mode';
     btn.classList.toggle('add-mode', addMode);
     addBtn.classList.toggle('visible', addMode);
   }
@@ -711,9 +711,9 @@
           : p.photo
             ? `<img src="${p.photo}" alt="${p.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
             : ''}
-        <div class="face-placeholder" style="${p.photo ? 'display:none' : ''}">ðŸ‘¤</div>
+        <div class="face-placeholder" style="${p.photo ? 'display:none' : ''}"></div>
         <div class="name">${p.name}</div>
-        <div class="group-tag">${p.gender} Â· ${p.group}</div>
+        <div class="group-tag">${p.gender} - ${p.group}</div>
       </div>
     `).join('');
   }
@@ -724,7 +724,7 @@
     if (!p) return;
     currentDetailID = id;
     document.getElementById('detailName').textContent = p.name;
-    document.getElementById('detailMeta').textContent = p.gender + ' Â· ' + p.group;
+    document.getElementById('detailMeta').textContent = p.gender + ' - ' + p.group;
 
     const imgEl = document.getElementById('detailImg');
     const phEl = document.getElementById('detailPlaceholder');
@@ -753,7 +753,7 @@
         <div class="family-thumb" onclick="closeDetail();setTimeout(()=>showDetail(${f.id}),150)">
           ${f.photo
             ? `<img src="${f.photo.startsWith('data:') ? f.photo : f.photo}" alt="${f.name}">`
-            : `<div class="thumb-ph">ðŸ‘¤</div>`}
+            : `<div class="thumb-ph"></div>`}
           <span>${f.name}</span>
         </div>
       `).join('');
@@ -779,7 +779,7 @@
     document.getElementById('newName').value = '';
     document.getElementById('newNotes').value = '';
     document.getElementById('familySuggestions').classList.remove('visible');
-    document.getElementById('photoArea').innerHTML = '<span>ðŸ“·</span><div>Tap photo options below</div>';
+    document.getElementById('photoArea').innerHTML = '<span></span><div>Tap photo options below</div>';
     document.getElementById('addModal').classList.add('open');
   }
 
@@ -853,13 +853,13 @@
 
   function skipPhoto() {
     addCapturedPhoto = null;
-    document.getElementById('photoArea').innerHTML = '<span>ðŸ‘¤</span><div>No photo â€” will add later</div>';
+    document.getElementById('photoArea').innerHTML = '<span></span><div>No photo will add later</div>';
   }
 
   function removePhoto() {
     editCapturedPhoto = null;
     editPhotoChanged = true;
-    document.getElementById('editPhotoArea').innerHTML = '<span>ðŸ‘¤</span><div>No photo</div>';
+    document.getElementById('editPhotoArea').innerHTML = '<span></span><div>No photo</div>';
   }
 
   async function savePerson() {
@@ -920,7 +920,7 @@
     if (p.familyIDs.length > 0) {
       linksDiv.innerHTML = p.familyIDs.map(fid => {
         const rel = people.find(x => x.id === fid);
-        return rel ? `<span class="suggestion-chip selected" onclick="removeEditFamilyLink(${fid},this)">${rel.name} âœ•</span>` : '';
+        return rel ? `<span class="suggestion-chip selected" onclick="removeEditFamilyLink(${fid},this)">${rel.name} </span>` : '';
       }).join('');
     } else {
       linksDiv.innerHTML = '<span style="color:#555;font-size:0.82rem;">None linked yet</span>';
@@ -932,7 +932,7 @@
       document.getElementById('editPhotoArea').innerHTML =
         `<img src="${src}" style="width:100%;height:100%;object-fit:cover;border-radius:12px;">`;
     } else {
-      document.getElementById('editPhotoArea').innerHTML = '<span>ðŸ‘¤</span><div>No photo yet</div>';
+      document.getElementById('editPhotoArea').innerHTML = '<span></span><div>No photo yet</div>';
     }
 
     document.getElementById('editModal').classList.add('open');
